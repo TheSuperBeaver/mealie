@@ -8,6 +8,7 @@ Translations are regularly pulled from Crowdin and included in each new release.
 Please use Crowdin as much as possible if you have any question/issue regarding a particular string. You can take a look at [Crowdin Knowledge base](https://support.crowdin.com/for-volunteer-translators/) if you want to know more about how to use this tool.
 
 ## My language is missing in Mealie
+To add a language, [follow the guide here](developers-guide/adding-language.md) 
 Once your language is translated on Crowdin, we need to manually add it in Mealie. If you believe your language is ready for use, please create an issue on GitHub.
 
 ## I can't find a particular text in Crowdin
