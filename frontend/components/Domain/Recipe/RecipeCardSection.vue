@@ -58,7 +58,7 @@
         </v-list>
       </v-menu>
       <ContextMenu
-        v-if="!$vuetify.breakpoint.xsOnly"
+        v-if="!$vuetify.breakpoint.smAndDown"
         :items="[
           {
             title: $tc('general.toggle-view'),
@@ -104,6 +104,7 @@
               :image="recipe.image"
               :tags="recipe.tags"
               :recipe-id="recipe.id"
+              avatar-size="fill-height"
             />
           </v-lazy>
         </v-col>
@@ -337,7 +338,7 @@ export default defineComponent({
           );
           break;
         case EVENTS.updated:
-          setter("update_at", $globals.icons.sortClockAscending, $globals.icons.sortClockDescending, "desc", false);
+          setter("updated_at", $globals.icons.sortClockAscending, $globals.icons.sortClockDescending, "desc", false);
           break;
         case EVENTS.lastMade:
           setter(

@@ -63,7 +63,7 @@ class InvalidDomainError(Exception):
 class RecipeDataService(BaseService):
     minifier: img.ABCMinifier
 
-    def __init__(self, recipe_id: UUID4, group_id: UUID4 | None = None) -> None:
+    def __init__(self, recipe_id: UUID4) -> None:
         """
         RecipeDataService is a service that consolidates the reading/writing actions related
         to assets, and images for a recipe.
@@ -71,7 +71,6 @@ class RecipeDataService(BaseService):
         super().__init__()
 
         self.recipe_id = recipe_id
-        self.slug = group_id
         self.minifier = img.PillowMinifier(purge=True, logger=self.logger)
 
         self.dir_data = Recipe.directory_from_id(self.recipe_id)
@@ -136,7 +135,7 @@ class RecipeDataService(BaseService):
         if ext not in img.IMAGE_EXTENSIONS:
             ext = "jpg"  # Guess the extension
 
-        file_name = f"{str(self.recipe_id)}.{ext}"
+        file_name = f"{self.recipe_id!s}.{ext}"
         file_path = Recipe.directory_from_id(self.recipe_id).joinpath("images", file_name)
 
         async with AsyncClient(transport=AsyncSafeTransport()) as client:

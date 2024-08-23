@@ -1,6 +1,6 @@
 <template>
   <div v-if="dialog">
-    <BaseDialog v-if="shoppingListDialog" v-model="dialog" :title="$t('recipe.add-to-list')" :icon="$globals.icons.cartCheck">
+    <BaseDialog v-if="shoppingListDialog && ready" v-model="dialog" :title="$t('recipe.add-to-list')" :icon="$globals.icons.cartCheck">
       <v-card-text>
         <v-card
           v-for="list in shoppingListChoices"
@@ -23,7 +23,7 @@
           {{ $t("general.cancel") }}
         </v-btn>
         <div class="d-flex justify-end" style="width: 100%;">
-          <v-checkbox v-model="preferences.viewAllLists" hide-details :label="$tc('general.show-all')" class="my-auto mr-4" />
+          <v-checkbox v-model="preferences.viewAllLists" hide-details :label="$tc('general.show-all')" class="my-auto mr-4" @click="setShowAllToggled()" />
         </div>
       </template>
     </BaseDialog>
@@ -127,13 +127,13 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, reactive, ref, useContext } from "@nuxtjs/composition-api";
+import { computed, defineComponent, reactive, ref, useContext, watchEffect } from "@nuxtjs/composition-api";
 import { toRefs } from "@vueuse/core";
 import RecipeIngredientListItem from "./RecipeIngredientListItem.vue";
 import { useUserApi } from "~/composables/api";
 import { alert } from "~/composables/use-toast";
 import { useShoppingListPreferences } from "~/composables/use-users/preferences";
-import { ShoppingListSummary } from "~/lib/api/types/group";
+import { ShoppingListSummary } from "~/lib/api/types/household";
 import { Recipe, RecipeIngredient } from "~/lib/api/types/recipe";
 
 export interface RecipeWithScale extends Recipe {
@@ -180,6 +180,7 @@ export default defineComponent({
     const { $auth, i18n } = useContext();
     const api = useUserApi();
     const preferences = useShoppingListPreferences();
+    const ready = ref(false);
 
     // v-model support
     const dialog = computed({
@@ -195,6 +196,7 @@ export default defineComponent({
     const state = reactive({
       shoppingListDialog: true,
       shoppingListIngredientDialog: false,
+      shoppingListShowAllToggled: false,
     });
 
     const shoppingListChoices = computed(() => {
@@ -203,6 +205,17 @@ export default defineComponent({
 
     const recipeIngredientSections = ref<ShoppingListRecipeIngredientSection[]>([]);
     const selectedShoppingList = ref<ShoppingListSummary | null>(null);
+
+    watchEffect(
+      () => {
+        if (shoppingListChoices.value.length === 1 && !state.shoppingListShowAllToggled) {
+          selectedShoppingList.value = shoppingListChoices.value[0];
+          openShoppingListIngredientDialog(selectedShoppingList.value);
+        } else {
+          ready.value = true;
+        }
+      },
+    );
 
     async function consolidateRecipesIntoSections(recipes: RecipeWithScale[]) {
       const recipeSectionMap = new Map<string, ShoppingListRecipeIngredientSection>();
@@ -285,6 +298,7 @@ export default defineComponent({
     function initState() {
       state.shoppingListDialog = true;
       state.shoppingListIngredientDialog = false;
+      state.shoppingListShowAllToggled = false;
       recipeIngredientSections.value = [];
       selectedShoppingList.value = null;
     }
@@ -300,6 +314,10 @@ export default defineComponent({
       await consolidateRecipesIntoSections(props.recipes);
       state.shoppingListDialog = false;
       state.shoppingListIngredientDialog = true;
+    }
+
+    function setShowAllToggled() {
+      state.shoppingListShowAllToggled = true;
     }
 
     function bulkCheckIngredients(value = true) {
@@ -348,12 +366,8 @@ export default defineComponent({
         }
       })
 
-      const successMessage = promises.length === 1
-        ? i18n.t("recipe.successfully-added-to-list") as string
-        : i18n.t("recipe.failed-to-add-to-list") as string;
-
-      success ? alert.success(successMessage)
-      : alert.error(i18n.t("failed-to-add-recipes-to-list") as string)
+      success ? alert.success(i18n.tc("recipe.successfully-added-to-list"))
+      : alert.error(i18n.tc("failed-to-add-recipes-to-list"))
 
       state.shoppingListDialog = false;
       state.shoppingListIngredientDialog = false;
@@ -363,11 +377,13 @@ export default defineComponent({
     return {
       dialog,
       preferences,
+      ready,
       shoppingListChoices,
       ...toRefs(state),
       addRecipesToList,
       bulkCheckIngredients,
       openShoppingListIngredientDialog,
+      setShowAllToggled,
       recipeIngredientSections,
       selectedShoppingList,
     }

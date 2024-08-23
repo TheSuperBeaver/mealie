@@ -11,7 +11,7 @@ from mealie.core.config import get_app_settings
 from mealie.db.db_setup import session_context
 from mealie.db.models._model_utils.guid import GUID
 from mealie.db.models.group import Group
-from mealie.db.models.group.shopping_list import ShoppingList
+from mealie.db.models.household.shopping_list import ShoppingList
 from mealie.db.models.labels import MultiPurposeLabel
 from mealie.db.models.recipe.ingredient import IngredientFoodModel, IngredientUnitModel
 from mealie.db.models.recipe.recipe import RecipeModel
@@ -25,7 +25,7 @@ from mealie.services.backups_v2.backup_v2 import BackupV2
 def dict_sorter(d: dict) -> Any:
     possible_keys = {"created_at", "id"}
 
-    return next((d[key] for key in possible_keys if key in d and d[key]), 1)
+    return next((d[key] for key in possible_keys if d.get(key)), 1)
 
 
 # For Future Use
@@ -68,7 +68,7 @@ def test_database_restore():
     new_exporter = AlchemyExporter(settings.DB_URL)
     snapshop_2 = new_exporter.dump()
 
-    for s1, s2 in zip(snapshop_1, snapshop_2):
+    for s1, s2 in zip(snapshop_1, snapshop_2, strict=False):
         assert snapshop_1[s1].sort(key=dict_sorter) == snapshop_2[s2].sort(key=dict_sorter)
 
 
